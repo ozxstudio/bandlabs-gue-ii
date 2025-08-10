@@ -65,5 +65,5 @@ Website: https://yourwebsite.com
 ---
 
 > "Buat alat yang kamu sendiri bisa mainin — bukan hanya mainan yang dibuat orang lain."  
-> – Y Tri Mujiadi Putranto
+> – dibangun kolaborasi dengan chatgpt-5 dan google gemini //
 
