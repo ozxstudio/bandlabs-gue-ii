@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drum Machine Standard</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #111;
+        color: #fff;
+        margin: 0;
+        padding: 20px;
+        display: flex; /* Ganti display body menjadi flex */
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+      .container {
+        margin: 0;
+        padding: 10px;
+      }
+      .parent-container {
+        display: flex; /* Ini kunci utamanya */
+        gap: 20px; /* Memberi jarak di antara kedua elemen */
+      }
+      h1 {
+        color: #fff;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 10px;
+        margin-top: 0;
+      }
+      hr {
+        margin: 40px 0;
+        border: 0;
+        border-top: 1px solid #ddd;
+      }
+      .sequencer-grid {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 800px;
+        background-color: #333;
+        color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        flex: 2; /* Biar ukurannya lebih besar dari kontrol volume */
+      }
+      .sequencer-row {
+        display: flex;
+        align-items: center;
+        margin: 2px;
+        width: 100%;
+      }
+      .sequencer-row-label {
+        width: 100px;
+        text-align: left;
+        font-weight: bold;
+        color: #00ffff;
+      }
+      .sequencer-steps-container {
+        display: flex;
+        flex-grow: 1;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .sequencer-step {
+        width: 30px;
+        height: 30px;
+        background-color: #e0e0e0;
+        border: 1px solid #c0c0c0;
+        border-radius: 4px;
+        margin: 2px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      .sequencer-step:hover {
+        transform: scale(1.05);
+      }
+      .sequencer-step.on {
+        background-color: #007bff;
+        border-color: #0056b3;
+      }
+      .sequencer-step.active {
+        border-color: #ffc107;
+        box-shadow: 0 0 5px #ffc107;
+      }
+      .individual-volume-controls {
+        /* Tambahan baru untuk volume individual */
+        flex: 1;
+        min-width: 250px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .individual-volume-controls label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+        font-weight: 600;
+      }
+      .individual-volume-controls input {
+        width: 150px;
+      }
+      .sequencer-controls {
+        margin-top: 20px;
+        background-color: #333;
+        color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 20rem;
+      }
+      .control-group {
+        margin: 10px 5px;
+        padding: 10px;
+        background-color: #f9f9f9;
+        border-left: 4px solid #007bff;
+        border-radius: 4px;
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+        font-weight: 600;
+      }
+      input[type="range"] {
+        width: 250px;
+      }
+      button {
+        padding: 9px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-left: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .mute-button {
+        background-color: #111;
+      }
+      .mute-button.muted {
+        background-color: #dc3545;
+      }
+      #record-button {
+        background-color: #dc3545;
+      }
+      #record-button:hover {
+        background-color: #c82333;
+      }
+      #stop-record-button {
+        background-color: #6c757d;
+      }
+      #stop-record-button:hover {
+        background-color: #5a6268;
+      }
+      .pitch-slider-container {
+        display: flex;
+        flex-wrap: nowrap;
+        width: calc(100% - 100px);
+        align-items: flex-start;
+        position: relative;
+        height: 100px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .pitch-slider-container input {
+        width: 100px;
+        margin: 0 2px;
+        height: 30px;
+        transform: rotate(-90deg);
+        transform-origin: left top;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .pitch-slider-container input::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 8px;
+        background: #ddd;
+        border-radius: 5px;
+      }
+      .pitch-slider-container input::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #007bff;
+        border-radius: 50%;
+        cursor: pointer;
+        margin-top: -6px;
+      }
+      .pitch-slider-container input::-moz-range-track {
+        width: 100%;
+        height: 8px;
+        background: #ddd;
+        border-radius: 5px;
+      }
+      .pitch-slider-container input::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #007bff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .card-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        margin: 20px 0;
+      }
+
+      .card {
+        background-color: #333;
+        color: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        width: calc(33.33% - 20px);
+        box-sizing: border-box;
+      }
+
+      .card h2 {
+        border-bottom: 2px solid #555;
+        padding-bottom: 10px;
+        margin-top: 0;
+      }
+
+      .control-group {
+        margin-bottom: 5px;
+        padding-right: 25px;
+      }
+
+      .control-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        background: #555;
+        color: #111;
+      }
+
+      .control-group input[type="range"],
+      .control-group select {
+        width: auto;
+      }
+
+      @media (max-width: 768px) {
+        .card {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!--SEQUENCER-->
+    <div class="container">
+      <h1>OZXLabz Drum Machine</h1>
+      <div class="sequencer-controls">
+        <label for="tempo-slider">Tempo (BPM):</label>
+        <input
+          type="range"
+          id="tempo-slider"
+          min="60"
+          max="200"
+          value="120"
+          step="1"
+        />
+        <label for="master-gain-slider">Sequencer Volume:</label>
+        <input
+          type="range"
+          id="master-gain-slider"
+          min="0"
+          max="1"
+          value="0.5"
+          step="0.01"
+        />
+        <br />
+        <label for="master-gain-slider">Master Volume:</label>
+        <input
+          type="range"
+          id="master-gain-slider"
+          min="0"
+          max="1"
+          value="0.5"
+          step="0.01"
+        />
+
+        <br /><br />
+        <button id="start-sequence-button">Start</button>
+        <button id="stop-sequence-button">Stop</button>
+        <button id="save-button">Save Settings</button>
+        <br /><br />
+        <button id="record-button">Record</button>
+        <button id="stop-record-button" disabled>Stop Recording</button>
+        <audio id="playback-audio" controls style="margin-top: 10px"></audio>
+        <a id="download-link" style="display: none; margin-left: 10px"
+          >Unduh Rekaman</a
+        >
+        <div class="control-group">
+          <strong>Presets Kick:</strong>
+          <button id="preset-degz">Degz</button>
+          <button id="preset-dhigz">Dhigz</button>
+          <button id="preset-djligz">Djigz</button>
+        </div>
+      </div>
+      <hr />
+    </div>
+    <!--HEADER-->
+    <div class="container">
+      <div class="sequencer-grid">
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Kick</span>
+          <div id="kick-steps" class="sequencer-steps-container"></div>
+          <button id="mute-kick-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-kick-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Snare1</span>
+          <div id="snare1-steps" class="sequencer-steps-container"></div>
+          <button id="mute-snare1-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-snare1-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Snare2</span>
+          <div id="snare2-steps" class="sequencer-steps-container"></div>
+          <button id="mute-snare2-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-snare2-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Snare3</span>
+          <div id="snare3-steps" class="sequencer-steps-container"></div>
+          <button id="mute-snare3-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-snare3-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Hi-Hat</span>
+          <div id="hihat-steps" class="sequencer-steps-container"></div>
+          <button id="mute-hihat-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-hihat-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.05"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Cymb1</span>
+          <div id="cymbal1-steps" class="sequencer-steps-container"></div>
+          <button id="mute-cymbal1-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-cymbal1-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Cymb2</span>
+          <div id="cymbal2-steps" class="sequencer-steps-container"></div>
+          <button id="mute-cymbal2-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-cymbal2-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Cymb3</span>
+          <div id="cymbal3-steps" class="sequencer-steps-container"></div>
+          <button id="mute-cymbal3-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-cymbal3-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Cymb4</span>
+          <div id="cymbal4-steps" class="sequencer-steps-container"></div>
+          <button id="mute-cymbal4-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-cymbal4-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Tom</span>
+          <div id="tom-steps" class="sequencer-steps-container"></div>
+          <button id="mute-tom-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-tom-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Tom3</span>
+          <div id="tom3-steps" class="sequencer-steps-container"></div>
+          <button id="mute-tom3-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-tom3-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+        <div class="sequencer-row">
+          <span class="sequencer-row-label">Bass</span>
+          <div id="bass-steps" class="sequencer-steps-container"></div>
+          <button id="mute-bass-button" class="mute-button">Mute</button>
+          <button onclick="clearPattern('bass')">Hapus</button>
+          <div class="instrument-volume-slider">
+            <input
+              type="range"
+              id="vol-bass-slider"
+              min="0"
+              max="1"
+              value="1"
+              step="0.01"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="audio-file-input" id="audio-label">Pilih File:</label>
+        <input type="file" id="audio-file-input" accept="audio/*" />
+        <button onclick="clearAudioFile()">Hapus File Audio</button>
+      </div>
+      <hr />
+    </div>
+    <!--SEQUENCER-->
+
+    <!--SOUND CONTROLLER-->
+
+    <!--SOUND CONTROLLER-->
+    <div class="card-container">
+      <div class="card">
+        <h2>Kick Synthesizer</h2>
+        <p>Sesuaikan suara kick di sini.</p>
+        <div class="control-group">
+          <label for="kick-pitch-slider">Kick Pitch Awal:</label>
+          <input
+            type="range"
+            id="kick-pitch-slider"
+            min="30"
+            max="300"
+            value="150"
+            step="1"
+          />
+        </div>
+        <div class="control-group">
+          <label for="kick-pitch-range-slider">Kick Pitch Range:</label>
+          <input
+            type="range"
+            id="kick-pitch-range-slider"
+            min="1"
+            max="300"
+            value="150"
+            step="1"
+          />
+        </div>
+        <div class="control-group">
+          <label for="kick-decay-slider">Kick Decay (Durasi):</label>
+          <input
+            type="range"
+            id="kick-decay-slider"
+            min="0.05"
+            max="2.0"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+        <div class="control-group">
+          <label for="kick-filter-slider">Kick Filter Cutoff:</label>
+          <input
+            type="range"
+            id="kick-filter-slider"
+            min="50"
+            max="5000"
+            value="100"
+            step="10"
+          />
+        </div>
+        <div class="control-group">
+          <label for="kick-distortion-slider">Kick Distortion:</label>
+          <input
+            type="range"
+            id="kick-distortion-slider"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0"
+          />
+        </div>
+        <div class="control-group">
+          <label for="kick-panning-slider">Kick Panning (L - R):</label>
+          <input
+            type="range"
+            id="kick-panning-slider"
+            min="-1"
+            max="1"
+            step="0.01"
+            value="0"
+          />
+        </div>
+        <div class="control-group">
+          <label for="kick-gain-slider">Kick Gain Output:</label>
+          <input
+            type="range"
+            id="kick-gain-slider"
+            min="0"
+            max="1.5"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Floor Tom Synthesizer</h2>
+        <p>Sesuaikan suara floor tom di sini.</p>
+        <div class="control-group">
+          <label for="tom-pitch-slider">Tom Pitch Awal:</label>
+          <input
+            type="range"
+            id="tom-pitch-slider"
+            min="50"
+            max="400"
+            value="120"
+            step="1"
+          />
+        </div>
+        <div class="control-group">
+          <label for="tom-decay-slider">Tom Decay (Durasi):</label>
+          <input
+            type="range"
+            id="tom-decay-slider"
+            min="0.1"
+            max="3.0"
+            step="0.01"
+            value="0.8"
+          />
+        </div>
+        <div class="control-group">
+          <label for="tom-gain-slider">Tom Gain Output:</label>
+          <input
+            type="range"
+            id="tom-gain-slider"
+            min="0"
+            max="1.5"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Hi-Hat Synthesizer</h2>
+        <p>Sesuaikan suara hi-hat di sini.</p>
+        <div class="control-group">
+          <label for="hihat-decay-slider">Hi-Hat Decay:</label>
+          <input
+            type="range"
+            id="hihat-decay-slider"
+            min="0.01"
+            max="1.0"
+            step="0.01"
+            value="0.1"
+          />
+        </div>
+        <div class="control-group">
+          <label for="hihat-filter-slider">Hi-hat Filter Cutoff:</label>
+          <input
+            type="range"
+            id="hihat-filter-slider"
+            min="500"
+            max="10000"
+            step="10"
+            value="7000"
+          />
+        </div>
+        <div class="control-group">
+          <label for="hihat-gain-slider">Hi-Hat Gain Output:</label>
+          <input
+            type="range"
+            id="hihat-gain-slider"
+            min="0"
+            max="1.5"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Snare Drum Synthesizer</h2>
+        <p>Sesuaikan suara snare di sini.</p>
+        <div class="control-group">
+          <label for="snare-pitch-slider">Snare Pitch:</label>
+          <input
+            type="range"
+            id="snare-pitch-slider"
+            min="100"
+            max="300"
+            value="180"
+            step="1"
+          />
+        </div>
+        <div class="control-group">
+          <label for="snare-decay-slider">Snare Decay:</label>
+          <input
+            type="range"
+            id="snare-decay-slider"
+            min="0.05"
+            max="1.0"
+            step="0.01"
+            value="0.2"
+          />
+        </div>
+        <div class="control-group">
+          <label for="snare-noise-slider">Snare Noise:</label>
+          <input
+            type="range"
+            id="snare-noise-slider"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+        <div class="control-group">
+          <label for="snare-panning-slider">Snare Panning (L - R):</label>
+          <input
+            type="range"
+            id="snare-panning-slider"
+            min="-1"
+            max="1"
+            step="0.01"
+            value="0"
+          />
+        </div>
+        <div class="control-group">
+          <label for="snare-gain-slider">Snare Gain Output:</label>
+          <input
+            type="range"
+            id="snare-gain-slider"
+            min="0"
+            max="1.5"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Bass Synthesizer</h2>
+        <p>Sesuaikan suara bass di sini.</p>
+        <div class="control-group">
+          <label for="bass-waveform">Waveform:</label>
+          <select id="bass-waveform">
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="sawtooth">Sawtooth</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="bass-pitch-slider">Pitch:</label>
+          <input
+            type="range"
+            id="bass-pitch-slider"
+            min="30"
+            max="150"
+            value="50"
+            step="1"
+          />
+        </div>
+        <div class="control-group">
+          <label for="bass-attack-slider">Attack:</label>
+          <input
+            type="range"
+            id="bass-attack-slider"
+            min="0.01"
+            max="1.0"
+            step="0.01"
+            value="0.05"
+          />
+        </div>
+        <div class="control-group">
+          <label for="bass-decay-slider">Decay:</label>
+          <input
+            type="range"
+            id="bass-decay-slider"
+            min="0.01"
+            max="1.0"
+            step="0.01"
+            value="0.3"
+          />
+        </div>
+        <div class="control-group">
+          <label for="bass-sustain-slider">Sustain:</label>
+          <input
+            type="range"
+            id="bass-sustain-slider"
+            min="0.0"
+            max="1.0"
+            step="0.01"
+            value="0.7"
+          />
+        </div>
+        <div class="control-group">
+          <label for="bass-release-slider">Release:</label>
+          <input
+            type="range"
+            id="bass-release-slider"
+            min="0.01"
+            max="2.0"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+        <div class="control-group">
+          <label for="bass-gain-slider">Bass Gain Output:</label>
+          <input
+            type="range"
+            id="bass-gain-slider"
+            min="0"
+            max="1.5"
+            step="0.01"
+            value="0.5"
+          />
+        </div>
+      </div>
+    </div>
+    <!--SOUND CONTROLLER END-->
+    <!--JAVASCRIPT-->
+    <script>
+      // Inisialisasi AudioContext dan GainNode
+      let audioCtx;
+      let masterGain;
+      let drumSubmixGain;
+      let compressor;
+      let currentStep = 0;
+      const numSteps = 16;
+      const drumKits = [
+        "kick",
+        "snare1",
+        "snare2",
+        "snare3",
+        "hihat",
+        "cymbal1",
+        "cymbal2",
+        "cymbal3",
+        "cymbal4",
+        "tom",
+        "bass",
+      ];
+      const sequences = {
+        kick: new Array(numSteps).fill(false),
+        snare1: new Array(numSteps).fill(false),
+        snare2: new Array(numSteps).fill(false),
+        snare3: new Array(numSteps).fill(false),
+        hihat: new Array(numSteps).fill(false),
+        cymbal1: new Array(numSteps).fill(false),
+        cymbal2: new Array(numSteps).fill(false),
+        cymbal3: new Array(numSteps).fill(false),
+        cymbal4: new Array(numSteps).fill(false),
+        tom: new Array(numSteps).fill(false),
+        bass: new Array(numSteps).fill(false),
+      };
+
+      const kickPitches = new Array(numSteps).fill(150);
+
+      let recorder;
+      let audioChunks = [];
+      let destination;
+      let importedAudioBuffer = null;
+      let audioSource = null;
+
+      let isPlaying = false;
+      let nextStepTime = 0;
+      const lookahead = 25.0;
+      let scheduleIntervalId;
+
+      const instrumentGains = {};
+
+      function activateAudioContext() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          destination = audioCtx.createMediaStreamDestination();
+
+          masterGain = audioCtx.createGain();
+          drumSubmixGain = audioCtx.createGain();
+          compressor = audioCtx.createDynamicsCompressor();
+
+          drumSubmixGain.connect(compressor);
+          compressor.connect(masterGain);
+
+          masterGain.connect(audioCtx.destination);
+          masterGain.connect(destination);
+
+          // Set default volume 50%
+          masterGain.gain.value = 0.5;
+          document.getElementById("master-gain-slider").value = 0.5;
+
+          document.getElementById("master-gain-slider").oninput = (e) => {
+            masterGain.gain.value = parseFloat(e.target.value);
+          };
+
+          console.log("AudioContext is active!");
+        }
+      }
+
+      // Inisialisasi sequencer
+
+      function initSequencer() {
+        activateAudioContext();
+        drumKits.forEach((kit) => {
+          const stepsContainer = document.getElementById(`${kit}-steps`);
+          const muteButton = document.getElementById(`mute-${kit}-button`);
+
+          if (stepsContainer) {
+            instrumentGains[kit] = audioCtx.createGain();
+            instrumentGains[kit].connect(drumSubmixGain);
+            instrumentGains[kit].gain.value = 1;
+
+            for (let i = 0; i < numSteps; i++) {
+              const stepButton = document.createElement("div");
+              stepButton.className = "sequencer-step";
+              stepButton.dataset.index = i;
+              stepButton.onclick = () => toggleStep(kit, i, stepButton);
+              stepsContainer.appendChild(stepButton);
+            }
+
+            // Tambahan untuk menghubungkan slider volume individu
+            const volSlider = document.getElementById(`vol-${kit}-slider`);
+            if (volSlider) {
+              volSlider.oninput = (e) => {
+                instrumentGains[kit].gain.value = e.target.value;
+              };
+            }
+          }
+
+          if (muteButton) {
+            muteButton.onclick = () => toggleMute(kit, muteButton);
+          }
+        });
+
+        const kickPitchSlidersContainer =
+          document.getElementById("kick-pitch-sliders");
+        if (kickPitchSlidersContainer) {
+          for (let i = 0; i < numSteps; i++) {
+            const pitchSlider = document.createElement("input");
+            pitchSlider.type = "range";
+            pitchSlider.min = 30;
+            pitchSlider.max = 300;
+            pitchSlider.value = 150;
+            pitchSlider.step = 1;
+            pitchSlider.dataset.index = i;
+            pitchSlider.oninput = (e) => {
+              kickPitches[i] = e.target.value;
+            };
+            kickPitchSlidersContainer.appendChild(pitchSlider);
+          }
+        }
+      }
+      function makeDistortionCurve(amount) {
+        const k = typeof amount === "number" ? amount : 50;
+        const n_samples = 44100;
+        const curve = new Float32Array(n_samples);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < n_samples; ++i) {
+          const x = (i * 2) / n_samples - 1;
+          curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+      }
+
+      function initSequencer() {
+        activateAudioContext();
+        drumKits.forEach((kit) => {
+          const stepsContainer = document.getElementById(`${kit}-steps`);
+          const muteButton = document.getElementById(`mute-${kit}-button`);
+
+          if (stepsContainer) {
+            instrumentGains[kit] = audioCtx.createGain();
+            instrumentGains[kit].connect(drumSubmixGain);
+
+            for (let i = 0; i < numSteps; i++) {
+              const stepButton = document.createElement("div");
+              stepButton.className = "sequencer-step";
+              stepButton.dataset.index = i;
+              stepButton.onclick = () => toggleStep(kit, i, stepButton);
+              stepsContainer.appendChild(stepButton);
+            }
+          }
+
+          if (muteButton) {
+            muteButton.onclick = () => toggleMute(kit, muteButton);
+          }
+        });
+
+        const kickPitchSlidersContainer =
+          document.getElementById("kick-pitch-sliders");
+        if (kickPitchSlidersContainer) {
+          for (let i = 0; i < numSteps; i++) {
+            const pitchSlider = document.createElement("input");
+            pitchSlider.type = "range";
+            pitchSlider.min = 30;
+            pitchSlider.max = 300;
+            pitchSlider.value = 150;
+            pitchSlider.step = 1;
+            pitchSlider.dataset.index = i;
+            pitchSlider.oninput = (e) => {
+              kickPitches[i] = e.target.value;
+            };
+            kickPitchSlidersContainer.appendChild(pitchSlider);
+          }
+        }
+      }
+
+      function toggleStep(kit, index, button) {
+        sequences[kit][index] = !sequences[kit][index];
+        button.classList.toggle("on");
+      }
+
+      function toggleMute(kit, button) {
+        if (instrumentGains[kit].gain.value > 0) {
+          instrumentGains[kit].gain.value = 0;
+          button.classList.add("muted");
+        } else {
+          instrumentGains[kit].gain.value = 1;
+          button.classList.remove("muted");
+        }
+      }
+
+      function clearPattern(kit) {
+        sequences[kit].fill(false);
+        const buttons = document.querySelectorAll(
+          `#${kit}-steps .sequencer-step`
+        );
+        buttons.forEach((button) => button.classList.remove("on"));
+      }
+
+      function clearAudioFile() {
+        importedAudioBuffer = null;
+        document.getElementById("audio-file-input").value = null;
+        document.getElementById("audio-label").textContent = "Pilih File:";
+        alert("File audio telah dihapus.");
+      }
+
+      function scheduleSteps() {
+        const bpm = document.getElementById("tempo-slider").value;
+        const stepTime = 60 / bpm / 4;
+
+        while (nextStepTime < audioCtx.currentTime + lookahead / 1000) {
+          const stepButton = document.querySelector(
+            `.sequencer-steps-container#kick-steps div[data-index="${currentStep}"]`
+          );
+          if (stepButton) {
+            setTimeout(() => {
+              document
+                .querySelectorAll(`.sequencer-step.active`)
+                .forEach((step) => step.classList.remove("active"));
+              const currentSteps = document.querySelectorAll(
+                `.sequencer-steps-container div[data-index="${currentStep}"]`
+              );
+              currentSteps.forEach((step) => step.classList.add("active"));
+            }, (nextStepTime - audioCtx.currentTime) * 1000);
+          }
+
+          if (sequences.kick[currentStep])
+            playSynthKick(nextStepTime, kickPitches[currentStep]);
+          if (sequences.snare1[currentStep])
+            playSynthSnare(nextStepTime, "snare1");
+          if (sequences.snare2[currentStep])
+            playSynthSnare(nextStepTime, "snare2");
+          if (sequences.snare3[currentStep])
+            playSynthSnare(nextStepTime, "snare3");
+          if (sequences.hihat[currentStep])
+            playSynthHiHat(nextStepTime, "hihat");
+          if (sequences.cymbal1[currentStep])
+            playSynthCymbal(nextStepTime, "cymbal1", {
+              decay: 0.8,
+              filter: 3000,
+              gain: 0.7,
+            });
+          if (sequences.cymbal2[currentStep])
+            playSynthCymbal(nextStepTime, "cymbal2", {
+              decay: 0.3,
+              filter: 5000,
+              gain: 0.6,
+            });
+          if (sequences.cymbal3[currentStep])
+            playSynthCymbal(nextStepTime, "cymbal3", {
+              decay: 0.4,
+              filter: 2000,
+              gain: 0.8,
+            });
+          if (sequences.cymbal4[currentStep])
+            playSynthCymbal(nextStepTime, "cymbal4", {
+              decay: 0.2,
+              filter: 4000,
+              gain: 0.7,
+            });
+          if (sequences.tom[currentStep]) playSynthTom(nextStepTime);
+          if (sequences.tom[currentStep]) playSynthTom3(nextStepTime);
+          if (sequences.bass[currentStep]) playSynthBass(nextStepTime);
+
+          currentStep = (currentStep + 1) % numSteps;
+          nextStepTime += stepTime;
+        }
+      }
+
+      function scheduler() {
+        scheduleSteps();
+        scheduleIntervalId = setTimeout(scheduler, lookahead);
+      }
+
+      function startSequence() {
+        if (isPlaying) return;
+        activateAudioContext();
+        isPlaying = true;
+        currentStep = 0;
+        nextStepTime = audioCtx.currentTime;
+
+        if (importedAudioBuffer) {
+          audioSource = audioCtx.createBufferSource();
+          audioSource.buffer = importedAudioBuffer;
+          audioSource.connect(masterGain);
+          audioSource.start(0);
+        }
+
+        scheduler();
+      }
+
+      function stopSequence() {
+        if (!isPlaying) return;
+        isPlaying = false;
+        clearTimeout(scheduleIntervalId);
+        document.querySelectorAll(".sequencer-step").forEach((step) => {
+          step.classList.remove("active");
+        });
+        currentStep = 0;
+
+        if (audioSource) {
+          audioSource.stop(0);
+          audioSource = null;
+        }
+      }
+
+      function playSynthKick(time, initialPitchOverride) {
+        activateAudioContext();
+        const initialPitch =
+          initialPitchOverride ||
+          document.getElementById("kick-pitch-slider").value;
+        const pitchRange = document.getElementById(
+          "kick-pitch-range-slider"
+        ).value;
+        const decayTime = document.getElementById("kick-decay-slider").value;
+        const filterFreq = document.getElementById("kick-filter-slider").value;
+        const distortionAmount = document.getElementById(
+          "kick-distortion-slider"
+        ).value;
+        const panningValue = document.getElementById(
+          "kick-panning-slider"
+        ).value;
+        const gainValue = document.getElementById("kick-gain-slider").value;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+        const distortion = audioCtx.createWaveShaper();
+        const panner = audioCtx.createStereoPanner();
+        const finalGain = audioCtx.createGain();
+
+        filter.type = "lowpass";
+        filter.frequency.value = filterFreq;
+        distortion.curve = makeDistortionCurve(distortionAmount * 100);
+        distortion.oversample = "4x";
+        panner.pan.value = panningValue;
+
+        osc.connect(gain);
+        gain.connect(filter);
+        filter.connect(distortion);
+        distortion.connect(panner);
+        panner.connect(finalGain);
+
+        finalGain.connect(instrumentGains["kick"]);
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(initialPitch, time);
+        gain.gain.setValueAtTime(1, time);
+        finalGain.gain.value = gainValue;
+
+        const finalPitch = initialPitch - pitchRange;
+        osc.frequency.exponentialRampToValueAtTime(
+          Math.max(1, finalPitch),
+          time + parseFloat(decayTime)
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          time + parseFloat(decayTime)
+        );
+        osc.start(time);
+        osc.stop(time + parseFloat(decayTime));
+      }
+
+      function playSynthTom(time) {
+        activateAudioContext();
+        const initialPitch = document.getElementById("tom-pitch-slider").value;
+        const decayTime = document.getElementById("tom-decay-slider").value;
+        const gainValue = document.getElementById("tom-gain-slider").value;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const finalGain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(finalGain);
+
+        finalGain.connect(instrumentGains["tom"]);
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(initialPitch, time);
+        gain.gain.setValueAtTime(1, time);
+        finalGain.gain.value = gainValue;
+        osc.frequency.exponentialRampToValueAtTime(
+          Math.max(1, initialPitch * 0.5),
+          time + parseFloat(decayTime)
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          time + parseFloat(decayTime)
+        );
+        osc.start(time);
+        osc.stop(time + parseFloat(decayTime));
+      }
+
+      function playSynthHiHat(time, kit) {
+        activateAudioContext();
+        const decayTime = document.getElementById("hihat-decay-slider").value;
+        const filterFreq = document.getElementById("hihat-filter-slider").value;
+        const gainValue = document.getElementById("hihat-gain-slider").value;
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(
+          1,
+          bufferSize,
+          audioCtx.sampleRate
+        );
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        const noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(1, time);
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "highpass";
+        filter.frequency.value = filterFreq;
+        const finalGain = audioCtx.createGain();
+        finalGain.gain.value = gainValue;
+        noiseSource.connect(filter);
+        filter.connect(gain);
+        gain.connect(finalGain);
+
+        finalGain.connect(instrumentGains[kit]);
+
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          time + parseFloat(decayTime)
+        );
+        noiseSource.start(time);
+        noiseSource.stop(time + parseFloat(decayTime));
+      }
+
+      function playSynthCymbal(time, kit, params) {
+        activateAudioContext();
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(
+          1,
+          bufferSize,
+          audioCtx.sampleRate
+        );
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+        const noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(1, time);
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = "highpass";
+        filter.frequency.value = params.filter;
+        const finalGain = audioCtx.createGain();
+        finalGain.gain.value = params.gain;
+        noiseSource.connect(filter);
+        filter.connect(gain);
+        gain.connect(finalGain);
+
+        finalGain.connect(instrumentGains[kit]);
+
+        gain.gain.exponentialRampToValueAtTime(
+          0.001,
+          time + parseFloat(params.decay)
+        );
+        noiseSource.start(time);
+        noiseSource.stop(time + parseFloat(params.decay));
+      }
+
+      function playSynthSnare(time, kit) {
+        activateAudioContext();
+        const pitch = document.getElementById("snare-pitch-slider").value;
+        const decay = document.getElementById("snare-decay-slider").value;
+        const noiseMix = document.getElementById("snare-noise-slider").value;
+        const panningValue = document.getElementById(
+          "snare-panning-slider"
+        ).value;
+        const gainValue = document.getElementById("snare-gain-slider").value;
+
+        const osc = audioCtx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(pitch, time);
+
+        const oscGain = audioCtx.createGain();
+        oscGain.gain.setValueAtTime(1, time);
+        oscGain.gain.exponentialRampToValueAtTime(
+          0.001,
+          time + parseFloat(decay)
+        );
+        osc.connect(oscGain);
+
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(
+          1,
+          bufferSize,
+          audioCtx.sampleRate
+        );
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = Math.random() * 2 - 1;
+        }
+
+        const noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(1, time);
+        noiseGain.gain.exponentialRampToValueAtTime(
+          0.001,
+          time + parseFloat(decay)
+        );
+        noiseSource.connect(noiseGain);
+
+        const mainGain = audioCtx.createGain();
+        const panner = audioCtx.createStereoPanner();
+        const finalGain = audioCtx.createGain();
+
+        mainGain.gain.value = gainValue;
+        panner.pan.value = panningValue;
+
+        oscGain.connect(mainGain);
+        noiseGain.connect(mainGain);
+        mainGain.connect(panner);
+        panner.connect(finalGain);
+        finalGain.connect(instrumentGains[kit]);
+
+        oscGain.gain.value = 1 - noiseMix;
+        noiseGain.gain.value = noiseMix;
+
+        osc.start(time);
+        osc.stop(time + parseFloat(decay));
+        noiseSource.start(time);
+        noiseSource.stop(time + parseFloat(decay));
+      }
+
+      function playSynthBass(time) {
+        activateAudioContext();
+        const waveform = document.getElementById("bass-waveform").value;
+        const pitch = document.getElementById("bass-pitch-slider").value;
+        const attackTime = parseFloat(
+          document.getElementById("bass-attack-slider").value
+        );
+        const decayTime = parseFloat(
+          document.getElementById("bass-decay-slider").value
+        );
+        const sustainLevel = parseFloat(
+          document.getElementById("bass-sustain-slider").value
+        );
+        const releaseTime = parseFloat(
+          document.getElementById("bass-release-slider").value
+        );
+        const gainValue = document.getElementById("bass-gain-slider").value;
+
+        const osc = audioCtx.createOscillator();
+        const oscGain = audioCtx.createGain();
+        const finalGain = audioCtx.createGain();
+
+        osc.connect(oscGain);
+        oscGain.connect(finalGain);
+        finalGain.connect(instrumentGains["bass"]);
+
+        osc.type = waveform;
+        osc.frequency.setValueAtTime(pitch, time);
+        finalGain.gain.value = gainValue;
+
+        oscGain.gain.setValueAtTime(0, time);
+        oscGain.gain.linearRampToValueAtTime(1, time + attackTime);
+        oscGain.gain.linearRampToValueAtTime(
+          sustainLevel,
+          time + attackTime + decayTime
+        );
+
+        const totalDuration = time + attackTime + decayTime + releaseTime;
+        oscGain.gain.setValueAtTime(sustainLevel, totalDuration - releaseTime);
+        oscGain.gain.linearRampToValueAtTime(0.001, totalDuration);
+
+        osc.start(time);
+        osc.stop(totalDuration);
+      }
+
+      function startRecording() {
+        if (!audioCtx) activateAudioContext();
+
+        recorder = new MediaRecorder(destination.stream);
+        audioChunks = [];
+        recorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+        recorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          const audio = document.getElementById("playback-audio");
+          audio.src = audioUrl;
+
+          const downloadLink = document.getElementById("download-link");
+          downloadLink.href = audioUrl;
+          downloadLink.download = "rekaman-rasa-anda.webm";
+          downloadLink.style.display = "inline";
+          alert(
+            'Rekaman Anda sudah siap diunduh! Silakan klik "Unduh Rekaman" sebelum mengunggahnya.'
+          );
+        };
+
+        recorder.start();
+        document.getElementById("record-button").disabled = true;
+        document.getElementById("stop-record-button").disabled = false;
+        document.getElementById("download-link").style.display = "none";
+        startSequence();
+      }
+
+      function stopRecording() {
+        if (recorder && recorder.state !== "inactive") {
+          recorder.stop();
+        }
+        document.getElementById("record-button").disabled = false;
+        document.getElementById("stop-record-button").disabled = true;
+        stopSequence();
+      }
+
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          activateAudioContext();
+          importedAudioBuffer = null;
+          audioCtx.decodeAudioData(
+            e.target.result,
+            (buffer) => {
+              importedAudioBuffer = buffer;
+              document.getElementById(
+                "audio-label"
+              ).textContent = `File: ${file.name}`;
+              alert(
+                `${file.name} berhasil dimuat. File ini akan diputar otomatis saat Anda menekan START.`
+              );
+            },
+            (error) => {
+              console.error("Error decoding audio data", error);
+              alert("Gagal memuat file audio. Pastikan formatnya benar.");
+            }
+          );
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      document.getElementById("start-sequence-button").onclick = startSequence;
+      document.getElementById("stop-sequence-button").onclick = stopSequence;
+      document.getElementById("record-button").onclick = startRecording;
+      document.getElementById("stop-record-button").onclick = stopRecording;
+      document
+        .getElementById("audio-file-input")
+        .addEventListener("change", handleFileSelect);
+
+      initSequencer();
+    </script>
+  </body>
+</html>

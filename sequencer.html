@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f0f2f5;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+      }
+      h1 {
+        color: #1a1a1a;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 10px;
+        margin-top: 0;
+      }
+      hr {
+        margin: 40px 0;
+        border: 0;
+        border-top: 1px solid #ddd;
+      }
+      .sequencer-grid {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 800px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .sequencer-row {
+        display: flex;
+        align-items: center;
+        margin: 5px;
+        width: 100%;
+      }
+      .sequencer-row-label {
+        width: 100px;
+        text-align: left;
+        font-weight: bold;
+        color: #555;
+      }
+      .sequencer-steps-container {
+        display: flex;
+        flex-grow: 1;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .sequencer-step {
+        width: 30px;
+        height: 30px;
+        background-color: #e0e0e0;
+        border: 1px solid #c0c0c0;
+        border-radius: 4px;
+        margin: 2px;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+      }
+      .sequencer-step:hover {
+        transform: scale(1.05);
+      }
+      .sequencer-step.on {
+        background-color: #007bff;
+        border-color: #0056b3;
+      }
+      .sequencer-step.active {
+        border-color: #ffc107;
+        box-shadow: 0 0 5px #ffc107;
+      }
+      .sequencer-controls {
+        margin-top: 20px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .control-group {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border-left: 4px solid #007bff;
+        border-radius: 4px;
+      }
+      label {
+        display: block;
+        margin-top: 10px;
+        font-weight: 600;
+      }
+      input[type="range"] {
+        width: 250px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-left: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .mute-button {
+        background-color: #6c757d;
+      }
+      .mute-button.muted {
+        background-color: #dc3545;
+      }
+      #record-button {
+        background-color: #dc3545;
+      }
+      #record-button:hover {
+        background-color: #c82333;
+      }
+      #stop-record-button {
+        background-color: #6c757d;
+      }
+      #stop-record-button:hover {
+        background-color: #5a6268;
+      }
+      .pitch-slider-container {
+        display: flex;
+        flex-wrap: nowrap;
+        width: calc(100% - 100px);
+        align-items: flex-start;
+        position: relative;
+        height: 100px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .pitch-slider-container input {
+        width: 100px;
+        margin: 0 2px;
+        height: 30px;
+        transform: rotate(-90deg);
+        transform-origin: left top;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .pitch-slider-container input::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 8px;
+        background: #ddd;
+        border-radius: 5px;
+      }
+      .pitch-slider-container input::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        background: #007bff;
+        border-radius: 50%;
+        cursor: pointer;
+        margin-top: -6px;
+      }
+      .pitch-slider-container input::-moz-range-track {
+        width: 100%;
+        height: 8px;
+        background: #ddd;
+        border-radius: 5px;
+      }
+      .pitch-slider-container input::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #007bff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Kick -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Kick</span>
+        <div id="kick-steps" class="sequencer-steps-container"></div>
+        <button id="mute-kick-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-kick"></div>
+      </div>
+    </div>
+
+    <!-- Kick Pitch -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Kick Pitch</span>
+        <div id="kick-pitch-sliders" class="pitch-slider-container"></div>
+      </div>
+    </div>
+
+    <!-- Snare 1 -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Snare 1 (Main)</span>
+        <div id="snare1-steps" class="sequencer-steps-container"></div>
+        <button id="mute-snare1-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-snare1"></div>
+      </div>
+    </div>
+
+    <!-- Snare 2 -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Snare 2 (Roll)</span>
+        <div id="snare2-steps" class="sequencer-steps-container"></div>
+        <button id="mute-snare2-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-snare2"></div>
+      </div>
+    </div>
+
+    <!-- Snare 3 -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Snare 3 (Variasi)</span>
+        <div id="snare3-steps" class="sequencer-steps-container"></div>
+        <button id="mute-snare3-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-snare3"></div>
+      </div>
+    </div>
+
+    <!-- Hi-Hat -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Hi-Hat</span>
+        <div id="hihat-steps" class="sequencer-steps-container"></div>
+        <button id="mute-hihat-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-hihat"></div>
+      </div>
+    </div>
+
+    <!-- Cymbal 1 -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Cymbal 1 (Crash)</span>
+        <div id="cymbal1-steps" class="sequencer-steps-container"></div>
+        <button id="mute-cymbal1-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-cymbal1"></div>
+      </div>
+    </div>
+
+    <!-- Cymbal 2 -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Cymbal 2 (Ride)</span>
+        <div id="cymbal2-steps" class="sequencer-steps-container"></div>
+        <button id="mute-cymbal2-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-cymbal2"></div>
+      </div>
+    </div>
+
+    <!-- Cymbal 3 -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Cymbal 3 (HH Open)</span>
+        <div id="cymbal3-steps" class="sequencer-steps-container"></div>
+        <button id="mute-cymbal3-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-cymbal3"></div>
+      </div>
+    </div>
+
+    <!-- Cymbal 4 -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Cymbal 4 (Splash)</span>
+        <div id="cymbal4-steps" class="sequencer-steps-container"></div>
+        <button id="mute-cymbal4-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-cymbal4"></div>
+      </div>
+    </div>
+
+    <!-- Tom -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Tom</span>
+        <div id="tom-steps" class="sequencer-steps-container"></div>
+        <button id="mute-tom-button" class="mute-button">Mute</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-tom"></div>
+      </div>
+    </div>
+
+    <!-- Bass -->
+    <div class="sequencer-grid">
+      <div class="sequencer-row">
+        <span class="sequencer-row-label">Bass</span>
+        <div id="bass-steps" class="sequencer-steps-container"></div>
+        <button id="mute-bass-button" class="mute-button">Mute</button>
+        <button onclick="clearPattern('bass')">Hapus</button>
+      </div>
+      <div class="individual-volume-controls">
+        <h3>Balancing Volume</h3>
+        <div id="volume-sliders-bass"></div>
+      </div>
+    </div>
+  </body>
+</html>
